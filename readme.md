@@ -4,3 +4,4 @@
 - 八叉树
 - 双边滤波(Bilateral Filters)
 - MarchingCubes
+- Verlet积分算法
