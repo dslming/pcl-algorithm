@@ -9,15 +9,100 @@ class Point {
 }
 
 export default class TreeApp {
-  constructor() {
+  constructor(draw) {
     this.points = [];
+    this.width = 10
+    this.height = 10
     this.tree = new KDTree("median");
     window.tree = this.tree;
+    this.draw = draw
     this.loadData();
+  }
+
+  redraw(){
+    if(this.points.length == 6) {
+      this.drawDividingLines(this.tree.root)
+    }
+  }
+
+  calcViewPort(node) {
+    let s = { x: 0, y: 0,z:0 };
+    let e = { x: 0, y: 0,z:0 };
+    s = new THREE.Vector3(s.x, s.y,s.z)
+    e = new THREE.Vector3(e.x, e.y,e.z)
+
+    // 根节点
+    if (!node.parent) {
+      if (node.isAxisX()) {
+        s.x = node.point.x;
+        s.y = 0;
+  
+        e.x = node.point.x;
+        e.y = this.height;
+      } else {
+        s.x = 0;
+        s.y = node.point.y;
+  
+        e.x = this.width;
+        e.y = node.point.y;
+      }
+    } else if (node.parent) {
+      let parentNode = node.parent;
+      let dir = parentNode.left.point.id == node.point.id ? "left" : "right";
+      // console.error(dir)
+      if (node.isAxisX()) {
+        // 垂直方向
+        if(dir == "left") {
+          s.x = node.point.x;
+          s.y = 0;
+    
+          e.x = node.point.x;
+          e.y = parentNode.point.y;
+        } else {
+          s.x = node.point.x;
+          s.y = parentNode.point.y;
+    
+          e.x = node.point.x;
+          e.y = this.height
+        }
+      } else {
+        // 水平方向
+        if (dir == "left") {
+          s.x = 0;
+          s.y = node.point.y;
+  
+          e.x = parentNode.point.x;
+          e.y = node.point.y;
+        } else if (dir == "right") {
+          s.x = parentNode.point.x;
+          s.y = node.point.y;
+  
+          e.x = this.width;
+          e.y = node.point.y;
+        }
+      }
+    }
+    return { start: s, end: e };
+  }
+  
+  drawDividingLines(node) {
+    if (node === null) return;
+  
+    // x方向颜色
+    let blue = 0x0000ff;
+    // y方向颜色
+    let red = 0xff0000;
+
+    var color = node.isAxisX() ? red : blue;
+    let { start, end } = this.calcViewPort(node);
+    this.draw.addLine(start, end, color);
+    this.drawDividingLines(node.left);
+    this.drawDividingLines(node.right);
   }
 
   recalculateTree() {
     this.tree.init(this.points);
+    this.redraw()
   }
 
   addPoint(point) {

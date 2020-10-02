@@ -1,5 +1,5 @@
 export default class Line {
-  constructor({ start, end, width = 0.04, color = 0x00c8c8 }) {
+  constructor({ start, end, width = 0.01, color = 0x00c8c8 }) {
     this.root = new THREE.Group();
     this.lineMesh = null;
     this.hLine = null;

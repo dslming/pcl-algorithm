@@ -29,6 +29,7 @@ export default class Stage {
     let vH = this.containerEle.clientHeight;
     this.renderer = new THREE.WebGLRenderer({
       antialias: true,
+      precision:"highp"
       // alpha: false,
       // preserveDrawingBuffer: true,
       // failIfMajorPerformanceCaveat: true,
@@ -48,8 +49,8 @@ export default class Stage {
     this.initControls();
     this.camera.position.set(0, 0, 50);
 
-    let axis = new THREE.AxesHelper(100);
-    this.scene.add(axis);
+    // let axis = new THREE.AxesHelper(100);
+    // this.scene.add(axis);
   }
 
   initControls() {
@@ -72,7 +73,8 @@ export default class Stage {
     //设置相机距离原点的最远距离
     // control.maxDistance = 50; //3000
     //是否开启右键拖拽
-    // control.enablePan = false;
+    control.enablePan = false;
+    control.enableRotate = false
   }
 
   handleResize() {
