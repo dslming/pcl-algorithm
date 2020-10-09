@@ -6,6 +6,26 @@ class Point {
     this.x = x;
     this.y = y;
     this.id = parseInt(Math.random() * 100000);
+    this.selected = false;
+    this.neighbour = false;
+  }
+
+  distance({ x, y }) {
+    return Math.sqrt((x - this.x) ** 2 + (y - this.y) ** 2);
+  }
+
+  select(point, radius) {
+    let selected = false;
+    if (this.x === point.x && this.y === point.y) {
+      selected = true;
+    }
+
+    if (this.distance(point) <= radius) {
+      selected = true;
+    }
+
+    this.selected = selected;
+    return this.selected;
   }
 }
 
@@ -131,5 +151,36 @@ export default class TreeApp {
       this.draw.addPoint(new THREE.Vector3(item.x, item.y, item.z));
       this.addPoint(new Point(item.x, item.y));
     }
+  }
+
+  selectPoint(point, pointRadius) {
+    var selectedPoint = null;
+    var kValue = 2;
+    this.points.forEach(function (centerPoint, index) {
+      if (centerPoint.select(point, pointRadius)) selectedPoint = centerPoint;
+    });
+
+    if (selectedPoint !== null) {
+      // find k+1 nearest neighbours; it counts itself to neighbours. for that
+      // is there +1 to k
+      var result = this.tree.nearestNeighbours(selectedPoint, kValue + 1);
+
+      result.nodes.forEach(function (node, index) {
+        if (node.point.selected) node.point.neighbourRadius = result.radius;
+        node.point.neighbour = true;
+      });
+
+      this.redraw();
+    }
+  }
+
+  test() {
+    this.selectPoint(new Point(5, 3.5), 3);
+    this.points.forEach((point) => {
+      if (point.selected && point.neighbour) {
+        console.error(point);
+      }
+    });
+    // vincent.circle(point, point.neighbourRadius, "#cece00");
   }
 }
