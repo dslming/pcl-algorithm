@@ -216,9 +216,7 @@ function redraw() {
     );
   }
 
-  if (points.length == 6) {
-    drawDividingLines(this.tree.root, [0, 0, canvas.width, canvas.height]);
-  }
+  drawDividingLines(this.tree.root, [0, 0, canvas.width, canvas.height]);
 
   deselectAllPoints();
 }
@@ -343,21 +341,20 @@ function drawDividingLines(node) {
 }
 
 setTimeout(() => {
-  let arr = [
-    { x: 2, y: 3 },
-    { x: 5, y: 4 },
-    { x: 9, y: 6 },
-    { x: 4, y: 7 },
-    { x: 8, y: 1 },
-    { x: 7, y: 2 },
-  ];
-
-  // 坐标轴的变换
-  arr.forEach((item) => {
-    item.x *= 50;
-    item.y *= 50;
-    // item.y -= 500;
-    // item.y = -item.y;
-    addPoint(new Point(item.x, item.y));
-  });
+  // let arr = [
+  //   { x: 2, y: 3 },
+  //   { x: 5, y: 4 },
+  //   { x: 9, y: 6 },
+  //   { x: 4, y: 7 },
+  //   { x: 8, y: 1 },
+  //   { x: 7, y: 2 },
+  // ];
+  // // 坐标轴的变换
+  // arr.forEach((item) => {
+  //   item.x *= 50;
+  //   item.y *= 50;
+  //   // item.y -= 500;
+  //   // item.y = -item.y;
+  //   addPoint(new Point(item.x, item.y));
+  // });
 }, 500);

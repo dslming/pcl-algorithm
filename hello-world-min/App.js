@@ -24,7 +24,7 @@ class App {
     this.addKeduX();
     this.addKeduY();
     this.setCamera();
-    let treeApp = new TreeApp(this);
+    this.treeApp = new TreeApp(this);
   }
 
   setCamera() {

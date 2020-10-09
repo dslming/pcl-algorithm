@@ -127,7 +127,7 @@ export default class TreeApp {
     ];
     for (let i = 0; i < arr.length; i++) {
       let item = arr[i];
-      await sleep(2000);
+      await sleep(20);
       this.draw.addPoint(new THREE.Vector3(item.x, item.y, item.z));
       this.addPoint(new Point(item.x, item.y));
     }

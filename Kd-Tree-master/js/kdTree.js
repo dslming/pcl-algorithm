@@ -18,7 +18,7 @@ class KDTreeNode {
   }
 }
 
-export default class KDTree {
+class KDTree {
   constructor(splitValueType) {
     this.root = null;
     this.splitValueType = splitValueType;
@@ -160,6 +160,11 @@ export default class KDTree {
     }
   }
 
+  /**
+   * 查找最近点
+   * @param {*} point
+   * @param {*} k
+   */
   nearestNeighbours(point, k) {
     const inLeftPart = function (point, dim, split) {
       if (dim % 2 == 0) {
