@@ -5,6 +5,7 @@
 
 [KD Tree 的原理及 Python 实现](https://zhuanlan.zhihu.com/p/45346117?utm_source=wechat_session&utm_medium=social&utm_oi=984539009145569280)
 
+[](https://github.com/ubilabs/kd-tree-javascript)
 ![alt](./img/001.png)
 
 输入 6 个点坐标:
