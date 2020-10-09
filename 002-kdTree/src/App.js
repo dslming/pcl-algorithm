@@ -80,6 +80,19 @@ class App {
     this.stage.scene.add(cube);
   }
 
+  addCircle(center, radius){
+    let old = this.root.getChildByName("circle")
+    if(old) this.root.remove(old)
+
+    var segments = 64,
+    material = new THREE.LineBasicMaterial({ color: 0x0000ff }),
+    geometry = new THREE.CircleGeometry(radius, segments);
+    let mesh = new THREE.Line(geometry, material)
+    mesh.position.set(center.x, center.y, 0)
+    mesh.name = "circle"
+    this.root.add(mesh)
+  }
+
   addLine(s, e, color = 0x0000ff) {
     let l = new Line({
       start: { x: s.x, y: s.y, z: 0 },
@@ -115,20 +128,6 @@ class App {
     // this.root.add(cube);
     scene.add(cube);
   }
-
-  // addPoint() {
-  //   let arr = [
-  //     { x: 2, y: 3 },
-  //     { x: 5, y: 4 },
-  //     { x: 9, y: 6 },
-  //     { x: 4, y: 7 },
-  //     { x: 8, y: 1 },
-  //     { x: 7, y: 2 },
-  //   ];
-  //   arr.forEach((item) => {
-  //     this.addBox(new THREE.Vector3(item.x, item.y, item.z));
-  //   });
-  // }
 }
 
 window.onload = () => {

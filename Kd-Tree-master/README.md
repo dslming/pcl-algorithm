@@ -1,1 +1,0 @@
-https://github.com/darjanin/Kd-Tree/tree/master/js

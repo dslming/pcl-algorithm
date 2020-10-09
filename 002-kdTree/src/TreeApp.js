@@ -151,36 +151,12 @@ export default class TreeApp {
       this.draw.addPoint(new THREE.Vector3(item.x, item.y, item.z));
       this.addPoint(new Point(item.x, item.y));
     }
+    lm.treeApp.search({x:5,y:4}, 2)
   }
 
-  selectPoint(point, pointRadius) {
-    var selectedPoint = null;
-    var kValue = 2;
-    this.points.forEach(function (centerPoint, index) {
-      if (centerPoint.select(point, pointRadius)) selectedPoint = centerPoint;
-    });
-
-    if (selectedPoint !== null) {
-      // find k+1 nearest neighbours; it counts itself to neighbours. for that
-      // is there +1 to k
-      var result = this.tree.nearestNeighbours(selectedPoint, kValue + 1);
-
-      result.nodes.forEach(function (node, index) {
-        if (node.point.selected) node.point.neighbourRadius = result.radius;
-        node.point.neighbour = true;
-      });
-
-      this.redraw();
-    }
-  }
-
-  test() {
-    this.selectPoint(new Point(5, 3.5), 3);
-    this.points.forEach((point) => {
-      if (point.selected && point.neighbour) {
-        console.error(point);
-      }
-    });
-    // vincent.circle(point, point.neighbourRadius, "#cece00");
+  search({x,y}, r) {
+    let ret = this.tree.searchByRadius(new Point(x,y), r)
+    console.error(ret)
+    this.draw.addCircle({x, y}, r)
   }
 }

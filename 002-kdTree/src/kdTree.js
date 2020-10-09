@@ -18,7 +18,7 @@ class KDTreeNode {
   }
 }
 
-class KDTree {
+export default class KDTree {
   constructor(splitValueType) {
     this.root = null;
     this.splitValueType = splitValueType;
@@ -160,162 +160,6 @@ class KDTree {
     }
   }
 
-  /**
-   * 查找最近点
-   * @param {*} point
-   * @param {*} k
-   */
-  nearestNeighbours(point, k) {
-    const inLeftPart = function (point, dim, split) {
-      if (dim % 2 == 0) {
-        return point.x < split ? true : false;
-      } else {
-        return point.y < split ? true : false;
-      }
-    };
-
-    const distanceFromPlane = function (point, dim, split) {
-      const planePoint =
-        dim % 2 === 0 ? new Point(split, point.y) : new Point(point.x, split);
-      return point.distance(planePoint);
-    };
-
-    const updateRadius = function (nodes) {
-      let maxRadius = 0;
-      nodes.forEach((node) => {
-        if (node.distance > maxRadius) maxRadius = node.distance;
-      });
-      return maxRadius;
-    };
-
-    const addNewAndRemove = function (nodes, currentNode, point, k) {
-      let contains = false;
-
-      nodes.forEach((node) => {
-        if (node.distance === currentNode.distance) contains = true;
-      });
-
-      if (!contains) {
-        nodes.push(currentNode);
-        nodes.sort((a, b) => {
-          if (a.distance > b.distance) {
-            return 1;
-          } else if (a.distance < b.distance) {
-            return -1;
-          }
-          return 0;
-        });
-
-        if (nodes.length > k) nodes.splice(-1, 1);
-      }
-
-      return nodes;
-    };
-
-    const findNearPoints = function (node, point, k, result) {
-      if (node.point !== null) {
-        node.distance = Math.round(point.distance(node.point));
-        result.nodes.push(node);
-        result.radius = node.distance;
-        return result;
-      }
-
-      if (inLeftPart(point, node.dim, node.split)) {
-        result = findNearPoints(node.left, point, k, result);
-        if (result.nodes.length < k) {
-          result = findNearPoints(node.right, point, k, result);
-        }
-      } else {
-        result = findNearPoints(node.right, point, k, result);
-        if (result.nodes.length < k) {
-          result = findNearPoints(node.left, point, k, result);
-        }
-      }
-
-      return result;
-    };
-
-    const searchSubtree = function (node, point, k, result) {
-      let nodes = [];
-      let currentNode, hyperplaneDistance;
-      if (node !== null) nodes.push(node);
-
-      while (nodes.length > 0) {
-        currentNode = nodes.pop();
-
-        if (currentNode.point !== null) {
-          currentNode.distance = point.distance(currentNode.point);
-          if (currentNode.distance < result.radius) {
-            result.nodes = addNewAndRemove(result.nodes, currentNode, point, k);
-            result.radius = updateRadius(result.nodes);
-          }
-          continue;
-        }
-
-        hyperplaneDistance = distanceFromPlane(
-          point,
-          currentNode.dim,
-          currentNode.split
-        );
-        if (hyperplaneDistance > result.radius) {
-          if (inLeftPart(point, currentNode.dim, currentNode.split)) {
-            nodes.push(currentNode.left);
-          } else {
-            nodes.push(currentNode.right);
-          }
-        } else {
-          nodes.push(currentNode.left);
-          nodes.push(currentNode.right);
-        }
-      }
-
-      return result;
-    };
-
-    const findNearestPoints = function (root, point, k, result) {
-      let kd, hyperplaneDistance;
-      let currentNode = result.nodes[0];
-      while (currentNode !== root) {
-        hyperplaneDistance = distanceFromPlane(
-          point,
-          currentNode.parent.dim,
-          currentNode.parent.split
-        );
-
-        if (hyperplaneDistance < result.radius) {
-          if (currentNode === currentNode.parent.left) {
-            result = searchSubtree(currentNode.parent.right, point, k, result);
-          } else {
-            result = searchSubtree(currentNode.parent.left, point, k, result);
-          }
-        }
-
-        currentNode = currentNode.parent;
-      }
-
-      return result;
-    };
-
-    let result = { nodes: [], radius: 0 };
-
-    result = findNearPoints(this.root, point, k, result);
-    result.nodes.forEach((node) => {
-      if (node.distance > result.radius) result.radius = node.distance;
-    });
-
-    result = findNearestPoints(this.root, point, k, result);
-    result.nodes = result.nodes.sort((a, b) => {
-      if (a.distance > b.distance) {
-        return 1;
-      } else if (a.distance < b.distance) {
-        return -1;
-      }
-      return 0;
-    });
-
-    return result;
-  }
-
   insideRect(rectangle) {
     const inside = function (node, rectangle) {
       if (node === null) return;
@@ -340,5 +184,49 @@ class KDTree {
     };
 
     inside(this.root, rectangle);
+  }
+
+  distance_(p1, p2) {
+    var vector = {x: p2.x - p1.x, y: p2.y - p1.y};
+    return Math.sqrt(Math.pow(vector.x, 2) + Math.pow(vector.y, 2));
+  }
+
+  isInCircle_(p, circle) {
+    return this.distance_(p, circle.center) <= circle.radius;
+  }
+
+  searchByRadius(p, radius) {
+    var circle = {center: p, radius: radius}
+    var result = []
+    var nodesQueue = []
+    var currentNode
+    var partitioning
+
+    if (this.root) {
+      nodesQueue.push(this.root);
+
+      while (currentNode = nodesQueue.pop()) {
+        // partitioning = !(currentNode.level % 2) ? 'x' : 'y';
+        partitioning = currentNode.cdir
+
+        // Traverse the left  if circle lies in the left/up half:
+        if (currentNode.left &&
+            p[partitioning] - radius < currentNode.point[partitioning]) {
+          nodesQueue.push(currentNode.left);
+        }
+
+        // Traverse the right  if circle lies in the right/down half:
+        if (currentNode.right &&
+            p[partitioning] + radius >= currentNode.point[partitioning]) {
+          nodesQueue.push(currentNode.right);
+        }
+
+        if (this.isInCircle_(currentNode.point, circle)) {
+          result.push(currentNode.point);
+        }
+      }
+    }
+
+    return result;
   }
 }

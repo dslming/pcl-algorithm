@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script src="https://s3-us-west-2.amazonaws.com/s.cdpn.io/175711/kdTree.js"></script>
+    <style>
+        body {
+            background-color: #f1f1f1;
+            margin: 0;
+        }
+
+        #canvas {
+            position: absolute;
+            margin: auto;
+            width: 600px;
+            height: 600px;
+            top: 0;
+            bottom: 0;
+            left: 0;
+            right: 0;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+    <script>
+        // kd-tree implementation: https://github.com/ubilabs/kd-tree-javascript
+
+        // output canvas
+        var viewWidth = 0,
+            viewHeight = 0,
+            canvas = document.getElementById('canvas'),
+            ctx = canvas.getContext('2d');
+
+        // input canvas (not in DOM)
+        var osCanvas = document.createElement('canvas'),
+            osCtx = osCanvas.getContext('2d');
+
+        // settings for image processing and drawing
+        // some combinations may be very slow :)
+        var settings = {
+            // must be equal to the side of the image being loaded
+            width:400,
+            // must be equal to the side of the image being loaded
+            height:400,
+            // range 0 to 255. pixels above this lightness will be stored as points
+            threshold: 200,
+            // range 0 to 1. scale down the sample image for performance and different effects
+            sampleScale:1,
+            // range 4 to many. max number of neighbors lines will be drawn to, based on brightness
+            maxWeight:24,
+            // range 1 to many. controls the speed of the drawing (lines drawn each requestAnimationFrame)
+            frameStep:4,
+            // width of the lines being drawn
+            lineWidth:0.1
+        };
+
+        // image processing output and drawing vars
+        var outputPath,
+            outputTree,
+            currentFrame = 0;
+
+        var image = document.createElement('img');
+        // must be set in order to read pixels from images loaded from another domain
+        image.crossOrigin = 'Anonymous';
+        // image.src = 'https://s3-us-west-2.amazonaws.com/s.cdpn.io/175711/me-sobel.jpg'
+        image.src = 'lm.png'
+        image.onload = function() {
+            viewWidth = canvas.width = canvas.clientWidth;
+            viewHeight = canvas.height = canvas.clientHeight;
+
+            // first set dimensions for sampling
+            osCanvas.width = settings.width;
+            osCanvas.height = settings.height;
+            // then sample
+            processImage();
+            // then set dimensions for drawing
+            osCanvas.width = viewWidth;
+            osCanvas.height = viewHeight;
+            // then draw, yay!
+            requestAnimationFrame(update);
+        };
+
+        // image processing
+
+        function processImage() {
+            console.log('processing...');
+
+            var t0 = Date.now();
+            var points = getPointsFromImage();
+            var t1 = Date.now();
+
+            console.log('point count:', points.length);
+            console.log('image processing took:', (t1 - t0));
+
+            generatePathFromPoints(points);
+
+            var t2 = Date.now();
+
+            console.log('path finding took:', (t2 - t1));
+
+            osCtx.clearRect(0, 0, settings.width, settings.height);
+        }
+
+        function getPointsFromImage() {
+            var threshold = settings.threshold,
+                sampleScale = settings.sampleScale,
+                outputScale = sampleScale * (settings.width / viewWidth),
+                infOutputScale = 1 / outputScale,
+                maxWeight = settings.maxWeight,
+                sampleSize = (osCanvas.height * sampleScale) | 0;
+
+            // draw the image into the canvas we will sample from
+            osCtx.drawImage(image, 0, 0, sampleSize, sampleSize);
+
+            // get the pixel color data for each pixel
+            var imageData = this.osCtx.getImageData(0, 0, sampleSize, sampleSize),
+                pixels = imageData.data,
+                points = [];
+
+            // for each pixel,
+            // check if the average of R+G+B is higher than the threshold
+            // if it is, store the {x,y} coordinates of the pixel
+            // also weigh lighter pixels more heavily
+            for (var i = 0; i < pixels.length; i += 4) {
+                var r = pixels[i    ],
+                    g = pixels[i + 1],
+                    b = pixels[i + 2],
+                    avg = ((r + g + b) / 3) | 0,
+                    x = ((i / 4) % sampleSize) * infOutputScale,
+                    y = ((i / 4 / sampleSize) | 0) * infOutputScale;
+
+                if (avg > threshold) {
+                    var p = {
+                        // offset the points a little for effect
+                        // also, the kdTree breaks down if it has too many similar points...
+                        x:x + randomRange(-0.1, 0.1),
+                        y:y + randomRange(-0.1, 0.1),
+                        weight:map(avg, threshold, 255, 1, maxWeight) | 0
+                    };
+
+                    points.push(p);
+                }
+            }
+
+            return points;
+        }
+
+        function generatePathFromPoints(points) {
+            var random = Math.random;
+
+            var distance = function(a, b) {
+                    // add a little noise
+                    var dx = (a.x - b.x) * (random() - 0.5);
+                    var dy = (a.y - b.y) * (random() - 0.5);
+                    // no need to sqrt because the exact distance does not matter
+                    return dx * dx + dy * dy;
+                },
+                dims = ['x', 'y'];
+            // create two trees
+            // one to construct a path (points will be removed from this tree)
+            // the other will be used for nearest neighbor search during the drawing phase (points will NOT be removed from this tree)
+            var pathTree = new kdTree(points, distance, dims),
+                copyTree = new kdTree(points, distance, dims),
+                path = [],
+                point = points[0],
+                length = points.length,
+                next;
+            // the next point in the path is the nearest neighbor
+            while (length) {
+                next = pathTree.nearest(point, 1)[0][0];
+                point = next;
+
+                pathTree.remove(point);
+                path.push(point);
+
+                length--;
+            }
+
+            outputPath = path;
+            outputTree = copyTree;
+        }
+
+        // draw the stuff
+
+        function update() {
+            // only draw new lines on the off-screen canvas (no need to redraw old ones)
+            this.updateDrawing();
+            // draw the output image to the on-screen canvas
+            // this is saver because resize/scroll events can cause the context to be cleared
+            this.drawToCanvas();
+
+            requestAnimationFrame(update);
+        }
+
+        function updateDrawing() {
+            var point = outputPath[currentFrame],
+                step = 0,
+                steps = settings.frameStep;
+
+            // colorized version
+            //var h = (frame % 360),
+            //    s = 80,
+            //    l = 40;
+            //
+            //osCtx.strokeStyle = 'hsl(' + h + ',' + s + '%,' + l + '%)';
+
+            osCtx.strokeStyle = '#000';
+            osCtx.lineWidth = settings.lineWidth;
+
+            var neighbors;
+            // for each point in the path
+            // find neighbors
+            // draw lines to neighbors
+            while ((++step <= steps) && point) {
+
+                osCtx.beginPath();
+                osCtx.moveTo(point.x, point.y);
+
+                neighbors = outputTree.nearest(point, point.weight);
+
+                neighbors.forEach(function(n){
+                    osCtx.lineTo(n[0].x, n[0].y);
+                });
+
+                osCtx.stroke();
+
+                point = outputPath[++this.currentFrame];
+            }
+        }
+
+        function drawToCanvas() {
+            ctx.clearRect(0, 0, viewWidth, viewHeight);
+            ctx.drawImage(osCanvas, 0, 0, viewWidth, viewHeight);
+        }
+
+        // utils
+
+        function randomRange(min, max) {
+            return min + Math.random() * (max - min);
+        }
+
+        function map(s, a1, a2, b1, b2) {
+            return ((s - a1)/(a2 - a1)) * (b2 - b1) + b1
+        }
+    </script>
+</body>
+</html>
