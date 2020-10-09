@@ -160,32 +160,6 @@ export default class KDTree {
     }
   }
 
-  insideRect(rectangle) {
-    const inside = function (node, rectangle) {
-      if (node === null) return;
-      if (node.point !== null) {
-        if (
-          rectangle.xMin < node.point.x &&
-          rectangle.xMax > node.point.x &&
-          rectangle.yMin < node.point.y &&
-          rectangle.yMax > node.point.y
-        ) {
-          node.point.selected = true;
-        }
-      } else {
-        if (node.dim % 2 == 0) {
-          if (rectangle.xMin < node.split) inside(node.left, rectangle);
-          if (rectangle.xMax > node.split) inside(node.right, rectangle);
-        } else {
-          if (rectangle.yMin < node.split) inside(node.left, rectangle);
-          if (rectangle.yMax > node.split) inside(node.right, rectangle);
-        }
-      }
-    };
-
-    inside(this.root, rectangle);
-  }
-
   distance_(p1, p2) {
     var vector = {x: p2.x - p1.x, y: p2.y - p1.y};
     return Math.sqrt(Math.pow(vector.x, 2) + Math.pow(vector.y, 2));
@@ -206,7 +180,6 @@ export default class KDTree {
       nodesQueue.push(this.root);
 
       while (currentNode = nodesQueue.pop()) {
-        // partitioning = !(currentNode.level % 2) ? 'x' : 'y';
         partitioning = currentNode.cdir
 
         // Traverse the left  if circle lies in the left/up half:
