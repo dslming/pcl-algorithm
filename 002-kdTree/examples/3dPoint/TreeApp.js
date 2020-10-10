@@ -2,43 +2,46 @@ import Geometry from "./Geometry/index.js"
 
 export default class TreeApp {
   constructor(draw) {
-    this.pointsIns = {}
     this.draw = draw
     this.loadData();
   }
 
   loadData() {
     var distance = function(a, b) {
-			return Math.pow( a[ 0 ] - b[ 0 ], 2 ) + Math.pow( a[ 1 ] - b[ 1 ], 2 ) + Math.pow( a[ 2 ] - b[ 2 ], 2 );
+      let dq =  Math.pow(a.x - b.x, 2) +  Math.pow(a.y - b.y, 2)  +  Math.pow(a.z - b.z, 2) 
+      return Math.sqrt(dq)
     }
 
     var dims = ['x', 'y', 'z'];
     let points = []
 
-    let pointCount = 10
+    let pointCount = 5000
     let hash = new HashMap()
-		var positions = new Float32Array( pointCount * 3 );
+
+    let point = Geometry.getPoint({pos:{x:0,y:0,z:0},size:0.5})
+
     for(let i=0;i<pointCount;i++) {
       let x = Math.random()*100 - 50
       let y = Math.random()*100 - 50
-      let z = Math.random() * 100 - 50
+      let z = Math.random()*100 - 50
 
       x = Number.parseInt(x)
       y = Number.parseInt(y)
       z = Number.parseInt(z)
-       positions[i * 3 + 0] = x
-      positions[i*3+1] = y
-      positions[i*3+2] = z
-      const pos = {x,y,z}
 
-      let point = Geometry.getPoint({pos,size:0.5})
-      this.draw.addMesh(point)
-      const id = parseInt(Math.random() * 100000);
-      hash.set(i, point)
-      point.name = id
-      points.push(x,y,z)
+      const pos = {
+        x,
+        y,
+        z,
+        index: i
+      }
+      let tempPoint = point.clone()
+      tempPoint.position.copy(pos)
+      hash.set(i, tempPoint)
+      points.push(pos)
+      this.draw.addMesh(tempPoint)
     }
-    this.tree = new THREE.TypedArrayUtils.Kdtree(positions, distance, 3);
+    this.tree = new kdTree(points, distance, dims)
     this.hash = hash
   }
 
@@ -48,15 +51,18 @@ export default class TreeApp {
       Geometry.setScale(item, 1)
     })
 
-    var ret = this.tree.nearest([point.x, point.y, point.z], 100, radius);
+    const count = 1000
+    console.time("c")
+    let ret = this.tree.nearest(point, count,radius )
+    console.timeEnd("c")
+    console.error(ret);
+
     ret.forEach(item => {
-      let index = item[0].pos
+      let {index} = item[0]
       let mesh = this.hash.get(index)
       Geometry.setColor(mesh, 0xff0000)
       Geometry.setScale(mesh, 2)
     });
-    console.error(ret);
-
 
     let sphere = Geometry.getSphere({ pos:point, radius })
     sphere.name = "sphere"

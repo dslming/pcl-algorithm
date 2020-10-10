@@ -19,9 +19,18 @@ export default class Stage {
     window.scene = this.scene;
 
     // 环境光
-    var ambient = new THREE.AmbientLight(0xffffff, 1.0);
+    var ambient = new THREE.AmbientLight(0xffffff, 0.8);
     ambient.name = "ambient";
     this.scene.add(ambient);
+
+    var hemiLight = new THREE.HemisphereLight( 0xffff55, 0x00ffff, 0.1 );
+    this.scene.add(hemiLight);
+
+    var diret = new THREE.DirectionalLight(0xffffff, 0.1);
+    diret.name = "diret";
+    diret.position.set(100,100,100)
+    this.scene.add(diret);
+
 
     // 渲染器
     this.containerEle = document.querySelector(container);
@@ -49,8 +58,8 @@ export default class Stage {
     this.initControls();
     this.camera.position.set(0, 0, 50);
 
-    // let axis = new THREE.AxesHelper(100);
-    // this.scene.add(axis);
+    let axis = new THREE.AxesHelper(100);
+    this.scene.add(axis);
   }
 
   initControls() {

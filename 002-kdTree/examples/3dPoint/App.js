@@ -14,6 +14,7 @@ class App {
 
     this.setCamera();
     this.treeApp = new TreeApp(this);
+    this.treeApp.search({point: {x:0,y:0,z:0}, radius:10})
   }
 
   removeMeshByName(name) {

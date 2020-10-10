@@ -20,9 +20,11 @@ export default class Geometry {
   }
 
   static setColor(mesh, color=0x0000ff) {
-    let mat = mesh.material
-    mat.color = new THREE.Color(color)
-    mat.needsUpdate = true
+    let mat = new THREE.MeshBasicMaterial({
+      color,
+      side: THREE.DoubleSide,
+    });
+    mesh.material = mat
   }
 
   static setScale(mesh, scale=1.5) {
@@ -30,7 +32,7 @@ export default class Geometry {
   }
 
   static getPoint({pos, size=0.1}) {
-    var geometry = new THREE.SphereGeometry(size, 64, 64);
+    var geometry = new THREE.SphereBufferGeometry(size, 64, 64);
     var material = new THREE.MeshBasicMaterial({
       color: 0x000000,
       side: THREE.DoubleSide,
@@ -42,14 +44,11 @@ export default class Geometry {
   }
 
   static getSphere({pos, radius}) {
-    var geometry = new THREE.SphereGeometry(radius, 16, 16);
-    var material = new THREE.MeshBasicMaterial({
-      color: 0x000000,
-      side: THREE.DoubleSide,
-      color: 0xff0000,
+    var geometry = new THREE.SphereBufferGeometry(radius, 64, 64);
+    var material = new THREE.MeshPhysicalMaterial({
+      color: 0x00ff00,
       transparent: true,
-      opacity: 0.2,
-      wireframe: true
+      opacity: 0.4,
     });
     var mesh = new THREE.Mesh(geometry, material);
     mesh.position.copy(pos);
