@@ -16,6 +16,11 @@ class App {
     this.treeApp = new TreeApp(this);
   }
 
+  removeMeshByName(name) {
+    let old = this.root.getChildByName(name)
+    old && this.root.remove(old)
+  }
+
   addMesh(mesh) {
     this.root.add(mesh)
   }
@@ -37,7 +42,7 @@ class App {
   }
 
 
- 
+
 }
 
 window.onload = () => {
